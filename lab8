@@ -1,0 +1,20 @@
+#include <stdio.h>
+#include <ctype.h>
+int main() {
+    char sym;
+    int dots = 0;
+    while ((sym = getchar()) != 27 && sym != EOF != '\0') {
+        if (sym == '.') {
+          if (dots == 1) {
+            printf("second dot\n");
+            return 0;
+          }
+          dots += 1;
+        }
+        else if (!isdigit(sym)) {
+            printf("not floating\n");
+            return 0;
+        }
+    }
+    printf("floatinf number\n");
+}
