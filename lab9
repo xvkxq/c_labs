@@ -1,0 +1,58 @@
+#include <stdio.h>
+#include <string.h>
+
+void print (int max, char *start_max){
+    for (int i = 0; i < max; i++){
+        printf("%c", start_max[i]);
+    }
+}
+void max_znch (int *max, int count, char **start_max, char *start){
+    if (*max < count){
+            *start_max = start;
+            *max = count;
+        }
+}
+int len_uniq (char *first_sym, char *start, char *end, char **last){
+    while (first_sym < end) {
+        char * tmp = strchr(first_sym + 1, *first_sym);
+        if (tmp != NULL && start < tmp && tmp < end){
+            *last = first_sym;
+            end = tmp;
+        }
+        first_sym += 1;
+    }
+    return end - start;
+}
+void get_max_uniq(char *str, int *max, char **start_max){
+    int count = 0;
+    char *start = str;
+    while (*start != '\0'){
+        char *first_sym = start;
+        char *end = strchr(start + 1, *start); // 0x8
+        char *last = NULL;
+
+        if (end == NULL) {
+            end = str + strlen(str);
+        }
+        count = len_uniq(first_sym, start, end, &last);
+        max_znch(max, count, start_max, start);
+        
+        if (last == NULL) {
+            start += 1;
+        } else {
+            start = last + 1;
+        }
+    }    
+}
+
+int main() {
+    
+    char str[100];
+    scanf("%s", str);
+    int max = 0;
+    char *start_max = str;
+    get_max_uniq(str, &max , &start_max);
+    print(max, start_max);
+    printf("\n");
+    return 0;
+}
