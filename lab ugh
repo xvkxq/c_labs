@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <termios.h>
+#include <unistd.h>
+
+int mygetch()
+{
+    struct termios oldt, newt;
+    int c;
+    tcgetattr(STDIN_FILENO, &oldt);
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    c = getchar();
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+    return c;
+}
+
+int main() {
+    char sym;
+    char exp = 0, znak = 0, num = 0;
+    int dots = 0;
+    while ((sym = mygetch()) != 27) {
+        printf("%c", sym);
+        if (sym == '+' || sym == '-') {
+          if (znak == 1) // Дублирующий знак
+            return 1;
+          znak = 1;
+          num = 0;
+        } else if (exp == 1 && znak == 0 && (!isdigit(sym))) { // Если на пред. символ экспонента, а текущ. не знак '-' '+'
+          return 1;
+        } else if (sym == 'e' || sym == 'E') {
+          if (num == 0 || exp == 1) // Если перед экспонентой не было чисел 
+                                    //    или вторая запись экспоненты
+            return 1;
+
+          exp = 1; // Исключаем повторение экспоненты
+          num = 0;
+          znak = 0; // След. символ должен быть знаком '+' '-'
+        } else if (sym == '.') { 
+          if (exp == 1 || dots == 1) // Вроде в экспоненциальной записи не может быть дробной части
+                                     //     (а если и может, оставить только (dots == 1)
+            return 1;
+          num = 0;
+          dots += 1; // отслеживаем кол-во точек
+        } else if (isdigit(sym)) { // если встретилась цифра (нужно для проверки на первый символ 'e')
+          num = 1;
+        } else { // Все иные символы
+          return 1;
+        }
+    }
+    if (num == 1) // Если последний знак цифра 
+      printf("floatinf number\n");
+}
+
