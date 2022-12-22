@@ -1,0 +1,63 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+void create_trans(int *A, int *B, int N, int M) {
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < M; ++j) {
+            B[j * N + i] = A[i * M + j];
+        }
+}
+void mul(int *A, int *B, int *T, int N, int M){
+    for (int i = 0; i < N; ++i){
+        for (int j = 0; j < N; ++j){
+            T[i * N + j] = 0;
+            for (int k = 0; k < M; ++k){
+                T[i * N + j] += A[i * M + k] * B[k * N + j];
+            }
+        }
+    }
+}
+void rand_line(int *array, int M){
+    for (int i = 0; i < M; i++){
+        array[i] = rand() % 10;
+    }
+}
+void print_matrix(int *A, int N, int M){
+     printf("******************************\n");
+     for (int i = 0; i < N; i++){
+        for (int j = 0; j < M; j++){ 
+            printf("%d ", A[i * M + j]);
+        }
+        printf("\n");
+    }
+   printf("******************************\n");
+}
+void fail()
+{
+    printf("Memory allocation failure!\n");
+    exit(EXIT_FAILURE);
+}
+
+int main() {
+    int N, M;
+    scanf("%d%d", &N, &M);
+    if (N <= 0 || M <= 0){
+        printf("error_size");
+        return 0;
+    }
+    int A[N][M], B[M][N], T[N][N];
+    srand(time(0));
+  
+    rand_line(A, N * M);
+   
+    printf("\n");
+    print_matrix(A, N, M);
+
+    create_trans(A, B, N, M);
+    print_matrix(B, M, N);
+
+    mul(A, B, T, N, M);
+    print_matrix(T, N, N);
+
+    printf("\n");
+}
