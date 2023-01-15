@@ -1,0 +1,78 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+void create_trans(int *A, int *B, int N, int M) {
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < M; ++j) {
+            B[j * N + i] = A[i * M + j];
+        }
+}
+void mul(int *A, int *B, int *T, int N, int M){
+    for (int i = 0; i < M; ++i){
+        for (int j = 0; j < M; ++j){
+            T[i * M + j] = 0;
+            for (int k = 0; k < N; ++k){
+                T[i * M + j] += B[i * N + k] * A[k * M + j];
+            }
+        }
+    }
+}
+void rand_line(int *array, int M){
+    for (int i = 0; i < M; i++){
+        array[i] = rand() % 10;
+    }
+}
+void print_matrix(int *A, int N, int M){
+     printf("******************************\n");
+     for (int i = 0; i < N; i++){
+        for (int j = 0; j < M; j++){ 
+            printf("%d ", A[i * M + j]);
+        }
+        printf("\n");
+    }
+   printf("******************************\n");
+}
+void fail()
+{
+    printf("Memory allocation failure!\n");
+    exit(EXIT_FAILURE);
+}
+
+int main() {
+    int N, M;
+    scanf("%d%d", &N, &M);
+    if (N <= 0 || M <= 0){
+        printf("error_size");
+        return 0;
+    }
+    int *A = (int*) malloc(sizeof(int) * N * M);
+    if (!A)
+      fail();
+
+    int *B = (int*) malloc(sizeof(int) * N * M);
+    if (!B) {
+      free(A);
+      fail();
+    }
+
+    int *T = (int*) malloc(sizeof(int) * N * N);
+    if (!T) {
+      free(A);
+      free(B);
+      fail();
+    }
+    srand(time(0));
+  
+    rand_line(A, N * M);
+   
+    printf("\n");
+    print_matrix(A, N, M);
+    create_trans(A, B, N, M);
+    print_matrix(B, M, N);
+    mul(A, B, T, N, M);
+    print_matrix(T, M, M);
+    printf("\n");
+    free(A);
+    free(B);
+    free(T);
+}
