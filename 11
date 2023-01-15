@@ -1,0 +1,185 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+typedef struct  Student Student;
+struct Student {
+    char surname[50]; 
+    char name[50];
+    int group;
+    int grade[3];
+    double avg;
+};
+void insert(Student *result){
+  // Функция, читающая информацию для нового студента
+  printf("Enter surname: ");
+  scanf("%s", result->surname);
+  printf("Enter name: ");
+  scanf("%s", result->name);
+  printf("Enter group: ");
+  scanf("%d", &result->group);
+  printf("Enter \n");
+  result->avg = 0.0;
+  int i = 0;
+  while (i < 3) {
+    printf("grade[%d] = ", i);
+    scanf("%d", &result->grade[i]);
+    if (result->grade[i] < 1 || 5 < result->grade[i]) {
+      printf("incorrect grade\nEnter again [1;5]\n");
+    } else {
+      i += 1;
+      result->avg += result->grade[i];
+    }
+  }  
+  result->avg /= 3;
+}
+void show(FILE* stream, Student *obj){
+  // stream - указатель на файловый поток
+  // obj - студент
+  // Вывод информации о студенте либо в файл, либо в консоль
+  fprintf(stream, "%s %s %d ",
+          (*obj).surname, 
+          (*obj).name, 
+          (*obj).group);         
+  // fprintf - тоже самое что и printf, только тут можно указать в какой файл выводим информацию
+  for (int i = 0; i < 3; i++){
+      fprintf(stream, "%d ", (*obj).grade[i]);
+  }
+  fprintf(stream, "\n");
+}
+int find(Student *arr, int size, char *surname) {
+  // Функция определяющая ИНДЕКС студента в массиве по фамилии.
+  // Пример:
+  // 0. Иванов
+  // 1. Петров
+  // 2. Кусков
+  //
+  // arr - указатель на всю последовательность
+  // size - определяет кол-во эл-ов
+  // surname - фамилия, которую ищем
+  //
+  // Если surname == Кусков, то результатом будет двойка
+  //      или если фамилия отсуствует то результатом будет -1 
+  for (int i = 0; i < size; ++i){
+      if (strcmp(arr[i].surname, surname) == 0) { // strcmp - функция из string.h 
+                                                  //    определяющая идентичность содержимого двух строк
+                                                  //    в нашем случае, фамилию из массива и искомую
+          return i;
+      }
+  }
+  return -1;
+}
+void less_by_avg(Student *arr, int size, double avg) {
+  // Функция определяющая студентов, чей средний балл ниже значения AVG
+  //  
+   for (int i = 0; i < size; ++i){
+    if (arr[i].avg < avg) { // Если нашли студента 
+        show(stdout, arr + i); // Вывод ответа в консоль
+                               //  stdout - глобальная переменная из библиотеки stdio.h
+                               //           хранит в себе адресс консоли, куда будет оформлен результат
+    }
+  }
+}
+void erase(Student *arr, int *size) {
+  // Удаление из массива студента по фамилии
+  char surname[50];
+  printf("Enter surname: "); 
+  scanf("%s", surname);
+  int pos = find(arr, *size, surname); // Ищем студента
+  if (pos == -1) {
+      printf("not found %s\n", surname);
+      return;
+  }
+                                          //   [0]      [1]       [2]
+  for (int i = pos; i < *size - 1; ++i) { // [Иванов] [Петров] [Кусков]
+                                          //    pos
+                                          //  Нам нужно Петрова и Кускова сдвинуть влево, чтобы не было пустого места
+//      memcpy(arr + i, arr + i + 1, sizeof(Student)); // Копирование всего содержимого
+      arr[i] = arr[i + 1]; // Берем следующий эл-т для сдвига
+  }
+  *size -= 1; 
+  arr = (Student*) realloc(arr, sizeof(Student) * (*size)); // Размер выделенной памяти сокращаем под оставшихся
+}
+void fail()
+{
+    printf("Memory allocation failure!\n");
+    exit(EXIT_FAILURE);
+}
+Student* load(int *size) {
+    FILE *input = fopen("students.txt", "r"); // Открытие файла на чтение
+    if (!input) { // Если файл не был найден
+      printf("File not found\n");
+      fail(); // остановка работы программы
+    }
+
+    int j = 0;
+    Student *inf = (Student*)malloc(sizeof(Student) *(j + 1)); // Подготавливаем места для хранения информации о студентах
+                                                               //     в динамической памяти
+    if (!inf) // Если память была не выделена
+      fail(); // останавливаем работу программы
+
+    while (!feof(input)) { // работаем с файлом, пока его содержимое не закончится
+        inf = (Student*)realloc(inf, sizeof(Student) *(j + 1)); // увеличиваем хранилище
+        if (fscanf(input, "%s", inf[j].surname) < 1) // читаем информацию (если информация не прочитала остановили чтение 
+          break;
+        if (fscanf(input, "%s", inf[j].name) < 1)
+          break;
+       
+        if (fscanf(input, "%d", &inf[j].group) < 1)
+          break;
+        
+        inf[j].avg = 0.0;
+        for (int i = 0; i < 3; i++){
+            fscanf(input, "%d", &inf[j].grade[i]);
+            inf[j].avg += inf[j].grade[i];
+        }
+        inf[j].avg /= 3;
+        ++j;
+    }
+    inf = (Student*)realloc(inf, sizeof(Student) * j); // увеличиваем хранилище
+    fclose(input); // закрыли файл из которого взяли информацию
+    *size = j;
+    return inf; // вернули в качестве ответа функцию готовый массив
+}
+void save(Student *inf, int size) { // Запись информации о студентах в файл
+    FILE *output = fopen("students.txt", "w");
+    for (int i = 0; i < size; ++i) {
+        show(output, inf + i);
+    }
+    fclose(output);
+}
+
+int main(){
+    int j = 0;
+    Student *inf = load(&j);
+    int ch = 1;
+    while (ch != 0) {
+      printf("\n\n~~~~~~~~~~~~~~\n");
+      printf("1: Insert\n");
+      printf("2: Remove\n");
+      printf("3: Show\n");
+      printf("4. Find less avg 4.5\n");
+      printf("0. Exit\n");
+      scanf("%d%*c", &ch);
+      if (ch == 0)
+        break;
+      
+      if (ch == 1) {
+        inf = (Student*) realloc(inf, sizeof(Student) * (j + 1));
+        insert(inf + j);
+        j++;
+      } else if (ch == 2) {
+        erase(inf, &j);
+      } else if (ch == 3) {
+        for(int i = 0; i < j; i++){
+            printf("\t\t[%d]\t\n", i + 1);
+            show(stdout, inf + i);
+        }
+      } else if (ch == 4) {
+          less_by_avg(inf, j, 4.5);
+      }
+    }
+    save(inf, j);
+    free(inf);
+    return 0;
+}
