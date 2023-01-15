@@ -1,0 +1,150 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <termios.h>
+#include <string.h>
+#include <unistd.h>
+int mygetch()
+{
+struct termios oldt, newt;
+int c;
+tcgetattr(STDIN_FILENO, &oldt);
+newt = oldt;
+newt.c_lflag &= ~(ICANON | ECHO);
+tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+c = getchar();
+tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+return c;
+}
+typedef struct
+{
+char mark[15];
+char model[15];
+char detail[15];
+int cena;
+bool del;
+} autos;
+void InsertRec(autos *shop)
+{
+printf("Insert mark auto: ");
+fgets(shop->mark, 15, stdin);
+printf("Insert model auto: ");
+fgets(shop->model, 15, stdin);
+printf("Insert name detail: ");
+fgets(shop->detail,15,stdin);
+printf("Insert price detail: ");
+scanf("%d", &shop->cena);
+shop->del = false;
+}
+void menu()
+{
+printf("\nMenu user\n");
+printf("1.Insert data\n");
+printf("2.View data\n");
+printf("3.Delete record\n");
+printf("4.Save in file\n");
+printf("5. Select model part\n");
+printf("Exit - ESC\n");
+}
+int main()
+{
+autos shop[16];
+int i;
+char index;
+int id;
+FILE* file = NULL;
+menu();
+i = 0;
+
+file = fopen("shop.bin", "rb");
+if (file != NULL) {
+// считываем кол-во сохраненных записей
+fread(&i, sizeof(int), 1, file);
+if (i > 0) {
+// считываем массив
+fread(shop, sizeof(shop), i, file);
+fclose(file);
+}
+}
+do
+{
+index = mygetch();
+if (isdigit(index))
+{
+if (index == '1')
+{
+InsertRec(&shop[i]);
+i = i + 1;
+menu();
+}
+if (index == '2')
+{
+for (int j = 0; j < i; j++)
+{
+if (shop[j].del) continue;
+printf(" %d. %s %s %s %d\n", j + 1, shop[j].mark, shop[j].model,
+shop[j].detail, shop[j].cena);
+}
+printf("\n(1)Menu\n Exit - ESC\n");
+index = mygetch();
+if (isdigit(index))
+{
+if (index == '1')
+{
+menu();
+continue;
+}
+}
+}
+if (index == '3')
+{
+for (int j = 0; j < i; j++)
+{
+if (shop[j].del) continue;
+printf(" %d. %s %s %s %d\n", j + 1, shop[j].mark, shop[j].model,
+shop[j].detail, shop[j].cena);
+}
+printf(" Insert number record for delete\n");
+scanf("%d", &id);
+id = id - 1;
+shop[id].del = true;
+menu();
+}
+if (index == '4')
+{
+file = fopen("shop.bin", "wb");
+if (file == NULL) {
+printf("Error save in file\n");
+getchar();
+return 1;
+}
+//записываем кол-во записей
+fwrite(&i, sizeof(int),1, file);
+// записываем введенные записи
+fwrite(shop, sizeof(autos), i, file);
+fclose(file);
+printf("Save complite\n");
+menu();
+}
+if (index == '5')
+{
+printf("Choose a model\n");
+for (int j = 0; j < i; j++)
+{
+if (shop[j].del) continue;
+printf(" %d. %s %s \n", j + 1, shop[j].mark, shop[j].model);
+}
+scanf("%d", &id);
+id = id -1;
+printf("Detal:\n");
+printf(" %s %d\n", shop[id].detail, shop[id].cena);
+menu();
+
+}
+}
+}
+while (index!=27);
+
+return 0;
+}
