@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <math.h>
+int main()
+{
+    double h, f, x;
+    printf("Enter h (0 <= h && h <= 3) \n");
+    scanf("%lf", &h);
+    if (h == 0)
+    {
+        printf("Invalid\n");
+        return 0;
+    }
+    printf("x            f(x)\n");
+    printf("--------------------\n");
+    unsigned int a = 3/h;
+    int i = 0;
+    while (i <= a)
+    {   
+        double x = i*h;
+    
+        if (x >= 0 && x <= 1.5)
+            f = pow(2, x) - 2 + pow(x, 2);
+    
+        else 
+            f = sqrt(x)*exp(x*x * (-1));
+    
+        printf("%lf %lf\n", x, f);
+        i++;
+    }
+    return 0;
+}    
